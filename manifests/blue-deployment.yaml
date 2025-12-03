@@ -16,6 +16,7 @@ spec:
       labels:
         app: demo-app
         role: blue
+        version: blue
     spec:
       containers:
         - name: demo-app
