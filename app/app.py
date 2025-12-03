@@ -1,27 +1,14 @@
-from flask import Flask
-import os
+from fastapi import FastAPI
+from app.model import generate_response
 
-app = Flask(__name__)
+app = FastAPI()
 
-ENV_COLOR = os.getenv("ENV_COLOR", "BLUE")
-APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+@app.get("/")
+def root():
+    return {"message": "Local LLM API running"}
 
-@app.route("/")
-def index():
-    color = ENV_COLOR.upper()
-    version = APP_VERSION
-    return f"""
-    <html>
-      <head><title>{color} - {version}</title></head>
-      <body style="font-family:Arial,Helvetica,sans-serif;">
-        <h1 style="color:{'blue' if color=='BLUE' else 'green'}">
-          {color} VERSION - Deployed via Blue/Green (v{version})
-        </h1>
-        <p>Container: {os.getenv('HOSTNAME', 'unknown')}</p>
-      </body>
-    </html>
-    """
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=80)
+@app.post("/generate")
+def generate(prompt: str):
+    output = generate_response(prompt)
+    return {"response": output}
 

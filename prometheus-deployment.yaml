@@ -10,16 +10,18 @@ data:
       evaluation_interval: 15s
 
     scrape_configs:
-      # scrape node-exporter on each node (we will run node-exporter as DaemonSet)
-      - job_name: 'node-exporter'
-        static_configs:
-          - targets: ['127.0.0.1:9100']  # replaced by Pod DNS when Prometheus runs on the same host network
-        metrics_path: /metrics
-
-      # scrape Prometheus itself
       - job_name: 'prometheus'
         static_configs:
           - targets: ['localhost:9090']
+
+      - job_name: 'node-exporter'
+        static_configs:
+          - targets: ['node-exporter.monitoring.svc.cluster.local:9100']
+        metrics_path: /metrics
+
+      - job_name: 'kube-state-metrics'
+        static_configs:
+          - targets: ['kube-state-metrics.monitoring.svc.cluster.local:8080']
 
 ---
 apiVersion: apps/v1
@@ -39,8 +41,6 @@ spec:
       labels:
         app: prometheus
     spec:
-      # run in hostNetwork so it can reach node-exporter via localhost when scheduled on that node
-      hostNetwork: true
       containers:
         - name: prometheus
           image: prom/prometheus:v2.45.0
@@ -50,7 +50,6 @@ spec:
             - "--web.listen-address=0.0.0.0:9090"
           ports:
             - containerPort: 9090
-              hostPort: 9090
           volumeMounts:
             - name: prom-config
               mountPath: /etc/prometheus
@@ -78,4 +77,3 @@ spec:
       targetPort: 9090
       protocol: TCP
       nodePort: 30090
-
